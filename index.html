@@ -479,6 +479,46 @@
         .anno-4 { top: 16px; left: 12px; } /* 테이블 영역 상대위치 */
         .anno-5 { top: 120px; left: 12px; } /* 테이블 인터랙션 */
 
+        /* 동적 폼 요소 */
+        .wf-select, .wf-date-input {
+            border: 2px solid var(--border-color);
+            background: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #374151;
+            font-family: 'Noto Sans KR', sans-serif;
+            cursor: pointer;
+            outline: none;
+            height: 32px;
+        }
+        .wf-select:focus, .wf-date-input:focus {
+            border-color: var(--wireframe-border);
+        }
+        .wf-pagination {
+            padding: 8px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            background: #f9fafb;
+        }
+        .wf-page-btn {
+            border: 1px solid var(--border-color);
+            background: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .wf-page-btn:hover { background: #f3f4f6; }
+        .wf-page-btn:disabled { opacity: 0.4; cursor: default; }
+        .wf-page-btn:disabled:hover { background: white; }
+
     </style>
 </head>
 <body>
@@ -598,12 +638,12 @@
                 <!-- 1. 컨트롤 바 (단순화) -->
                 <div class="wf-filters">
                     <div class="wf-anno anno-1">1</div>
-                    <div class="wf-input" style="width: 140px;">2026-03-11 <span>📅</span></div>
-                    <div class="wf-input" style="width: 160px; color:#9ca3af;">시간을 선택해주세요 <span>▼</span></div>
-                    <div class="wf-input" style="width: 90px;">30분 <span>▼</span></div>
-                    <div class="wf-input" style="width: 120px;">BUS-001 <span>▼</span></div>
-                    <div class="wf-btn">조회</div>
-                    <div class="wf-btn" style="background: #10b981; margin-left:8px;">엑셀 다운로드 ⬇</div>
+                    <input type="date" id="filter-date" class="wf-date-input" value="2026-03-11" style="width:140px;">
+                    <select id="filter-time" class="wf-select" style="width:160px;"><option value="">시간을 선택해주세요</option></select>
+                    <select id="filter-interval" class="wf-select" style="width:90px;"><option value="30">30분</option><option value="60">1시간</option></select>
+                    <select id="filter-vehicle" class="wf-select" style="width:120px;"></select>
+                    <div class="wf-btn" id="btn-search" style="cursor:pointer;">조회</div>
+                    <div class="wf-btn" id="btn-download" style="background:#10b981;margin-left:8px;cursor:pointer;">엑셀 다운로드 ⬇</div>
                 </div>
 
                 <div class="wf-content">
@@ -612,32 +652,12 @@
                         <div class="wf-anno anno-2">2</div>
                         <div class="wf-anno anno-3" style="top: 180px; left: 520px;">3</div>
                         
-                        <div class="wf-map-placeholder">
+                        <div id="map-placeholder" class="wf-map-placeholder">
                             <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
                             KAKAO MAP AREA (MVP)
-                            <span>단순 Polyline 이동 궤적만 표시</span>
+                            <span>조회 조건을 선택하고 [조회] 버튼을 클릭하세요</span>
                         </div>
-
-                        <!-- 궤적 모형 (단순 실선) -->
-                        <svg class="mock-path">
-                            <path d="M 100 200 L 200 150 L 400 150 L 520 125 L 700 80" />
-                        </svg>
-
-                        <!-- 로그 기록(점) 모형 (디자이너 참고용) -->
-                        <div class="mock-dot" style="top:197px; left:110px;"></div>
-                        <div class="mock-dot" style="top:175px; left:150px;"></div>
-                        <div class="mock-dot" style="top:162px; left:175px;"></div>
-                        <div class="mock-dot" style="top:150px; left:250px;"></div>
-                        <div class="mock-dot" style="top:150px; left:300px;"></div>
-                        <div class="mock-dot" style="top:150px; left:350px;"></div>
-                        <div class="mock-dot" style="top:137px; left:460px;"></div>
-                        <div class="mock-dot" style="top:102px; left:610px;"></div>
-                        <div class="mock-dot" style="top:92px; left:650px;"></div>
-                        
-                        <!-- 선택된 마커 1개만 (부하 방지 사양) -->
-                        <div class="mock-marker active" style="top:125px; left:520px; border-color:#3b82f6; background:#3b82f6; width:16px; height:16px;">
-                            <div class="mock-bus-label">BUS-001</div>
-                        </div>
+                        <div id="map-content" style="position:absolute;top:0;left:0;right:0;bottom:0;"></div>
                     </div>
 
                     <!-- 4. 테이블 영역 (상태값, 과속경고 등 MVP 제외) -->
@@ -650,43 +670,12 @@
                             <div class="wf-th">기록 시간 ▾</div>
                             <div class="wf-th">속도 (km/h)</div>
                         </div>
-
-                        <div class="wf-table-row">
-                            <div class="wf-td muted">121</div>
-                            <div class="wf-td">BUS-001</div>
-                            <div class="wf-td">08:14:28</div>
-                            <div class="wf-td">32</div>
+                        <div id="table-body" style="flex:1;overflow-y:auto;">
+                            <div style="padding:60px 24px;text-align:center;color:#9ca3af;font-size:14px;">
+                                조회 조건을 선택하고 [조회] 버튼을 클릭하세요.
+                            </div>
                         </div>
-                        <div class="wf-table-row">
-                            <div class="wf-td muted">122</div>
-                            <div class="wf-td">BUS-001</div>
-                            <div class="wf-td">08:14:30</div>
-                            <div class="wf-td">34</div>
-                        </div>
-                        <div class="wf-table-row active">
-                            <div class="wf-td muted">123</div>
-                            <div class="wf-td">BUS-001</div>
-                            <div class="wf-td" style="font-weight:700; color:#3b82f6;">08:14:32 (현재 지도 위치)</div>
-                            <div class="wf-td">36</div>
-                        </div>
-                        <div class="wf-table-row">
-                            <div class="wf-td muted">124</div>
-                            <div class="wf-td">BUS-001</div>
-                            <div class="wf-td">08:14:34</div>
-                            <div class="wf-td">65</div>
-                        </div>
-                        <div class="wf-table-row">
-                            <div class="wf-td muted">125</div>
-                            <div class="wf-td">BUS-001</div>
-                            <div class="wf-td">08:14:36</div>
-                            <div class="wf-td">40</div>
-                        </div>
-                        <div class="wf-table-row">
-                            <div class="wf-td muted">...</div>
-                            <div class="wf-td">...</div>
-                            <div class="wf-td">...</div>
-                            <div class="wf-td">...</div>
-                        </div>
+                        <div id="pagination" class="wf-pagination" style="display:none;"></div>
 
                     </div>
                 </div>
@@ -695,81 +684,215 @@
         </div>
     </main>
 
+    <script src="assets/mock-data.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const rows = document.querySelectorAll('.wf-table-row');
-            const marker = document.querySelector('.mock-marker');
-            const searchBtn = document.querySelector('.wf-btn'); // 첫번째 조회 버튼
-            
-            // 행(Row) 개수에 맞춘 가상의 지도(경로) 좌표
-            const positions = [
-                { top: '190px', left: '100px' },
-                { top: '175px', left: '150px' },
-                { top: '125px', left: '520px' },
-                { top: '105px', left: '600px' },
-                { top: '80px', left: '700px' }
-            ];
+            // --- DOM 참조 ---
+            const dateInput = document.getElementById('filter-date');
+            const timeSelect = document.getElementById('filter-time');
+            const intervalSelect = document.getElementById('filter-interval');
+            const vehicleSelect = document.getElementById('filter-vehicle');
+            const searchBtn = document.getElementById('btn-search');
+            const downloadBtn = document.getElementById('btn-download');
+            const tableBody = document.getElementById('table-body');
+            const mapArea = document.querySelector('.wf-map-area');
+            const mapPlaceholder = document.getElementById('map-placeholder');
+            const mapContent = document.getElementById('map-content');
+            const paginationEl = document.getElementById('pagination');
 
-            rows.forEach((row, index) => {
-                // 클릭 인터랙션을 나타내기 위해 마우스 오버 커서 추가
-                row.style.cursor = 'pointer';
+            let logs = [];
+            let pixels = [];
+            let page = 1;
+            let selectedIdx = -1;
+            let hoverDot = null;
+            const PER_PAGE = 50;
 
-                row.addEventListener('click', () => {
-                    // 1. 모든 열 Active 해제
-                    rows.forEach(r => {
-                        r.classList.remove('active');
-                        const timeCell = r.querySelector('.wf-td:nth-child(3)');
-                        if(timeCell) {
-                            timeCell.style.fontWeight = 'normal';
-                            timeCell.style.color = '#374151';
-                            timeCell.innerText = timeCell.innerText.replace(' (현재 지도 위치)', '');
-                        }
-                    });
-                    
-                    // 2. 선택된 열 Active 적용
-                    row.classList.add('active');
-                    const timeCell = row.querySelector('.wf-td:nth-child(3)');
-                    if(timeCell && index < 5) { // 5번째 줄까지만 동작 (예시)
-                        timeCell.style.fontWeight = '700';
-                        timeCell.style.color = '#3b82f6';
-                        timeCell.innerText = timeCell.innerText + ' (현재 지도 위치)';
-                    }
-                    
-                    // 3. 지도 마커 위치 이동 (애니메이션)
-                    if (index < positions.length && marker) {
-                        marker.style.transition = 'all 0.3s ease';
-                        marker.style.top = positions[index].top;
-                        marker.style.left = positions[index].left;
-
-                        const time = row.querySelector('.wf-td:nth-child(3)').innerText.replace(' (현재 지도 위치)', '');
-                        let speed = row.querySelector('.wf-td:nth-child(4)').innerText;
-                        
-                        marker.innerHTML = `
-                            <div style="position:absolute; top:-56px; left:-35px; width:86px; text-align:center; z-index:30; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-                                <div style="background:#1f2937; color:white; padding:4px 6px; border-radius:4px 4px 0 0; font-size:10px; font-weight:700;">BUS-001</div>
-                                <div style="background:white; color:#374151; padding:4px; font-size:11px; border:1px solid #9ca3af; border-top:none; border-radius:0 0 4px 4px;">
-                                    ${time}<br><b>${speed} km/h</b>
-                                </div>
-                                <div style="position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid #9ca3af;"></div>
-                                <div style="position:absolute; bottom:-5px; left:50%; transform:translateX(-50%); border-left:5px solid transparent; border-right:5px solid transparent; border-top:5px solid white;"></div>
-                            </div>
-                        `;
-                    }
-                });
+            // --- 옵션 초기화 ---
+            MockData.getTimeSlots().forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t; opt.textContent = t;
+                timeSelect.appendChild(opt);
+            });
+            MockData.VEHICLES.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v; opt.textContent = v;
+                vehicleSelect.appendChild(opt);
             });
 
-            // 조회 버튼 클릭 인터랙션
-            if(searchBtn) {
-                searchBtn.style.cursor = 'pointer';
-                searchBtn.addEventListener('click', () => {
-                    const originalText = searchBtn.innerText;
-                    searchBtn.innerText = '조회 중...';
-                    searchBtn.style.opacity = '0.7';
-                    setTimeout(() => {
-                        searchBtn.innerText = originalText;
-                        searchBtn.style.opacity = '1';
-                    }, 500);
+            // --- 조회 ---
+            searchBtn.addEventListener('click', () => {
+                if (!timeSelect.value) { alert('시간을 선택해주세요.'); return; }
+
+                searchBtn.textContent = '조회 중...';
+                searchBtn.style.opacity = '0.7';
+
+                setTimeout(() => {
+                    const [sh, sm] = timeSelect.value.split(':').map(Number);
+                    const dur = parseInt(intervalSelect.value);
+                    logs = MockData.generateLogs(vehicleSelect.value, dateInput.value, sh, sm, dur);
+
+                    const rect = mapArea.getBoundingClientRect();
+                    pixels = MockData.toPixels(logs, rect.width, rect.height);
+
+                    page = 1;
+                    selectedIdx = -1;
+                    renderTable();
+                    renderMap();
+
+                    searchBtn.textContent = '조회';
+                    searchBtn.style.opacity = '1';
+                }, 400);
+            });
+
+            // --- CSV 다운로드 ---
+            downloadBtn.addEventListener('click', () => {
+                if (!logs.length) { alert('먼저 조회해주세요.'); return; }
+                const blob = new Blob(['\uFEFF' + MockData.toCSV(logs)], { type: 'text/csv;charset=utf-8;' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = '운행이력_' + logs[0].vehicleId + '_' + logs[0].date + '.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+
+            // --- 테이블 렌더링 ---
+            function renderTable() {
+                const start = (page - 1) * PER_PAGE;
+                const end = Math.min(start + PER_PAGE, logs.length);
+                const pageData = logs.slice(start, end);
+                tableBody.innerHTML = '';
+
+                if (!logs.length) {
+                    tableBody.innerHTML = '<div style="padding:60px 24px;text-align:center;color:#9ca3af;font-size:14px;">해당 조건에 맞는 운행 이력이 없습니다.<br><span style="font-size:12px;">시간 범위, 차량, 날짜를 다시 확인해주세요.</span></div>';
+                    paginationEl.style.display = 'none';
+                    return;
+                }
+
+                pageData.forEach((log, i) => {
+                    const idx = start + i;
+                    const row = document.createElement('div');
+                    row.className = 'wf-table-row' + (idx === selectedIdx ? ' active' : '');
+                    row.style.cursor = 'pointer';
+                    row.dataset.idx = idx;
+                    row.innerHTML =
+                        '<div class="wf-td muted">' + log.id + '</div>' +
+                        '<div class="wf-td">' + log.vehicleId + '</div>' +
+                        '<div class="wf-td">' + log.timeStr + '</div>' +
+                        '<div class="wf-td">' + log.speed + '</div>';
+                    row.addEventListener('click', () => selectRow(idx));
+                    row.addEventListener('mouseenter', () => hoverRow(idx));
+                    row.addEventListener('mouseleave', clearHover);
+                    tableBody.appendChild(row);
                 });
+                renderPagination();
+            }
+
+            // --- 페이지네이션 ---
+            function renderPagination() {
+                const totalPages = Math.ceil(logs.length / PER_PAGE);
+                if (totalPages <= 1) { paginationEl.style.display = 'none'; return; }
+                paginationEl.style.display = 'flex';
+                paginationEl.innerHTML =
+                    '<button class="wf-page-btn" id="pp">◀ 이전</button>' +
+                    '<span>' + page + ' / ' + totalPages + ' 페이지 (총 ' + logs.length + '건)</span>' +
+                    '<button class="wf-page-btn" id="pn">다음 ▶</button>';
+                document.getElementById('pp').disabled = page <= 1;
+                document.getElementById('pn').disabled = page >= totalPages;
+                document.getElementById('pp').onclick = () => { if (page > 1) { page--; renderTable(); } };
+                document.getElementById('pn').onclick = () => { if (page < totalPages) { page++; renderTable(); } };
+            }
+
+            // --- 지도 렌더링 ---
+            function renderMap() {
+                mapPlaceholder.style.display = logs.length ? 'none' : 'flex';
+                mapContent.innerHTML = '';
+                if (!logs.length) return;
+
+                // SVG 경로선
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.style.cssText = 'position:absolute;width:100%;height:100%;';
+                const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                const pts = [];
+                for (let i = 0; i < pixels.length; i += 3) {
+                    pts.push(pixels[i].x.toFixed(1) + ',' + pixels[i].y.toFixed(1));
+                }
+                polyline.setAttribute('points', pts.join(' '));
+                polyline.setAttribute('stroke', '#6b7280');
+                polyline.setAttribute('stroke-width', '2');
+                polyline.setAttribute('fill', 'none');
+                svg.appendChild(polyline);
+                mapContent.appendChild(svg);
+
+                // 경로 위 점 (샘플링)
+                const step = Math.max(1, Math.floor(logs.length / 20));
+                for (let i = 0; i < logs.length; i += step) {
+                    const dot = document.createElement('div');
+                    dot.className = 'mock-dot';
+                    dot.style.cssText = 'top:' + (pixels[i].y - 3) + 'px;left:' + (pixels[i].x - 3) + 'px;cursor:pointer;';
+                    dot.addEventListener('click', () => selectRow(i));
+                    mapContent.appendChild(dot);
+                }
+
+                // 활성 마커 (숨김 상태로 대기)
+                const marker = document.createElement('div');
+                marker.id = 'active-marker';
+                marker.className = 'mock-marker active';
+                marker.style.cssText = 'display:none;border-color:#3b82f6;background:#3b82f6;width:16px;height:16px;transition:all .2s ease;';
+                mapContent.appendChild(marker);
+            }
+
+            // --- 행 선택 (테이블 ↔ 지도 양방향) ---
+            function selectRow(idx) {
+                selectedIdx = idx;
+                const log = logs[idx];
+                const pos = pixels[idx];
+
+                // 필요 시 해당 페이지로 이동
+                const targetPage = Math.floor(idx / PER_PAGE) + 1;
+                if (targetPage !== page) { page = targetPage; renderTable(); }
+
+                // 테이블 행 하이라이트
+                tableBody.querySelectorAll('.wf-table-row').forEach(r => r.classList.remove('active'));
+                const targetRow = tableBody.querySelector('[data-idx="' + idx + '"]');
+                if (targetRow) {
+                    targetRow.classList.add('active');
+                    targetRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+
+                // 마커 이동 + 툴팁
+                const marker = document.getElementById('active-marker');
+                if (marker && pos) {
+                    marker.style.display = 'block';
+                    marker.style.top = (pos.y - 8) + 'px';
+                    marker.style.left = (pos.x - 8) + 'px';
+                    marker.innerHTML =
+                        '<div style="position:absolute;top:-48px;left:-35px;width:86px;text-align:center;z-index:30;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));">' +
+                            '<div style="background:#1f2937;color:white;padding:3px 6px;border-radius:4px 4px 0 0;font-size:10px;font-weight:700;">' + log.vehicleId + '</div>' +
+                            '<div style="background:white;color:#374151;padding:3px;font-size:11px;border:1px solid #9ca3af;border-top:none;border-radius:0 0 4px 4px;">' +
+                                log.timeStr + '<br><b>' + log.speed + ' km/h</b>' +
+                            '</div>' +
+                        '</div>';
+                }
+            }
+
+            // --- Hover 연동 ---
+            function hoverRow(idx) {
+                if (idx === selectedIdx) return;
+                const pos = pixels[idx];
+                if (!pos) return;
+                if (!hoverDot) {
+                    hoverDot = document.createElement('div');
+                    hoverDot.className = 'mock-marker';
+                    hoverDot.style.cssText = 'border-color:#3b82f6;width:12px;height:12px;transition:all .15s ease;z-index:15;pointer-events:none;';
+                    mapContent.appendChild(hoverDot);
+                }
+                hoverDot.style.display = 'block';
+                hoverDot.style.top = (pos.y - 6) + 'px';
+                hoverDot.style.left = (pos.x - 6) + 'px';
+            }
+
+            function clearHover() {
+                if (hoverDot) hoverDot.style.display = 'none';
             }
         });
     </script>
