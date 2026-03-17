@@ -1,0 +1,13 @@
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# bkit / claude
+.claude/
+docs/.bkit-memory.json
+docs/.pdca-status.json

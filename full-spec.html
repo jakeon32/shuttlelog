@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>화면 기획서: 셔틀버스 GPS 운행 이력관리</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --panel-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --primary: #3b82f6;
+            --wireframe-border: #9ca3af;
+            --wireframe-bg: #f9fafb;
+            --annotation-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: row;
+        }
+
+        /* ── 반응형 처리 ── */
+        @media (max-width: 1300px) {
+            body {
+                flex-direction: column;
+                height: 100%;
+                overflow: auto;
+            }
+            .doc-panel {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid var(--border-color);
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            }
+            .canvas-panel {
+                padding: 20px !important;
+                align-items: flex-start !important;
+            }
+            .wireframe-app {
+                width: 100% !important;
+                flex-direction: column;
+                min-height: 800px !important;
+            }
+            .wf-sidebar {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 2px solid var(--wireframe-border);
+                flex-direction: row !important;
+                align-items: center;
+            }
+            .wf-nav {
+                display: flex;
+                padding: 0 20px !important;
+                flex: 1;
+                overflow-x: auto;
+            }
+            .wf-nav-item {
+                white-space: nowrap;
+            }
+            .wf-logo {
+                border-bottom: none !important;
+                border-right: 2px solid var(--wireframe-border);
+            }
+            .wf-filters {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .wf-content {
+                flex-direction: column !important;
+            }
+            .wf-map-area {
+                height: 350px;
+                border-bottom: 2px solid var(--wireframe-border) !important;
+            }
+            .wf-table-area {
+                height: 450px;
+            }
+        }
+
+        /* ── 왼쪽: 화면 설명서 (기획서) ── */
+        .doc-panel {
+            width: 440px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .doc-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #f8fafc;
+        }
+
+        .doc-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .doc-header p {
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .doc-content {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .doc-section {
+            margin-bottom: 32px;
+        }
+
+        .doc-section h2 {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #1e293b;
+        }
+
+        .doc-section p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 12px;
+        }
+
+        /* 애너테이션 리스트 */
+        .annotation-list {
+            list-style: none;
+        }
+
+        .annotation-item {
+            display: flex;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+
+        .anno-num {
+            background-color: var(--annotation-color);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .anno-text h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #0f172a;
+        }
+
+        .anno-text p {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
+        /* ── 오른쪽: 와이어프레임 캔버스 ── */
+        .canvas-panel {
+            flex: 1;
+            padding: 40px;
+            overflow: auto;
+            position: relative;
+            background-image: radial-gradient(#d1d5db 1px, transparent 0);
+            background-size: 20px 20px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .wireframe-app {
+            width: 1024px;
+            min-height: 768px;
+            background: white;
+            border: 2px solid var(--wireframe-border);
+            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── UI 요소들 (로파이 스타일) ── */
+        .wf-sidebar {
+            width: 220px;
+            border-right: 2px solid var(--wireframe-border);
+            background-color: var(--wireframe-bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wf-logo {
+            padding: 20px;
+            border-bottom: 2px solid var(--wireframe-border);
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 1px;
+            color: #4b5563;
+        }
+
+        .wf-nav {
+            padding: 20px 0;
+        }
+
+        .wf-nav-item {
+            padding: 12px 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .wf-nav-item.active {
+            font-weight: 700;
+            color: #111827;
+            background-color: #e5e7eb;
+            border-left: 4px solid #111827;
+        }
+
+        .wf-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wf-header {
+            height: 60px;
+            border-bottom: 2px solid var(--wireframe-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 14px;
+        }
+        .wf-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4b5563;
+        }
+        .wf-header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #374151;
+        }
+        .wf-sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+            text-align: center;
+            font-weight: 700;
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
+        .wf-filters {
+            padding: 16px 24px;
+            border-bottom: 2px solid var(--wireframe-border);
+            background-color: var(--wireframe-bg);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            position: relative;
+        }
+
+        .wf-input {
+            border: 2px solid var(--border-color);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #9ca3af;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .wf-btn {
+            background: #4b5563;
+            color: white;
+            font-weight: 500;
+            padding: 6px 20px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        /* 상-중-하 3단 레이아웃 반영 (지도 40%, 테이블 60%) */
+        .wf-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wf-map-area {
+            flex: 4; /* 40% */
+            border-bottom: 2px double var(--wireframe-border);
+            background-color: #e5e7eb;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .wf-map-placeholder {
+            font-size: 24px;
+            font-weight: 700;
+            color: #9ca3af;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wf-map-placeholder span {
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        /* 맵 위 가짜 마커 및 패스 */
+        .mock-path {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mock-path path {
+            stroke: #6b7280;
+            stroke-width: 4;
+            stroke-dasharray: 8 4;
+            fill: none;
+        }
+
+        .mock-marker {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 3px solid #6b7280;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 10;
+        }
+        
+        .mock-marker.active {
+            border-color: #ef4444; /* 강조 */
+            transform: scale(1.3);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+            z-index: 20;
+        }
+
+        .mock-dot {
+            width: 6px;
+            height: 6px;
+            background: #9ca3af;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .wf-table-area {
+            flex: 6; /* 60% */
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .wf-table-header {
+            padding: 12px 24px;
+            border-bottom: 2px solid var(--wireframe-border);
+            display: flex;
+            font-size: 13px;
+            font-weight: 700;
+            background: #f9fafb;
+        }
+
+        .wf-th {
+            flex: 1;
+        }
+
+        .wf-th:first-child { flex: 0.5; }
+
+        .wf-table-row {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            font-size: 13px;
+        }
+
+        .wf-table-row:nth-child(even) { background: #f9fafb; }
+        .wf-table-row:hover { background: #f3f4f6; }
+        .wf-table-row.active { background: #e0f2fe; border-left: 4px solid #3b82f6; }
+
+        .wf-td {
+            flex: 1;
+            color: #374151;
+        }
+        .wf-td.muted { color: #9ca3af; }
+        .wf-td:first-child { flex: 0.5; }
+        
+        /* 애너테이션 마커 (와이어프레임 위에 올림) */
+        .wf-anno {
+            position: absolute;
+            background-color: var(--annotation-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 20;
+        }
+
+        .anno-1 { top: 16px; left: 12px; }  /* 필터 영역 상대위치 */
+        .anno-2 { top: 16px; left: 12px; } /* 지도 영역 상대위치 */
+        .anno-3 { top: 480px; left: 24px; } /* 인라인 스타일로 덮어쓰기 됨 */
+        .anno-4 { top: 16px; left: 12px; } /* 테이블 영역 상대위치 */
+        .anno-5 { top: 120px; left: 12px; } /* 테이블 인터랙션 */
+
+    </style>
+</head>
+<body>
+
+    <!-- 왼쪽 설명 패널 -->
+    <aside class="doc-panel">
+        <header class="doc-header">
+            <h1>셔틀버스 GPS 운행 이력관리</h1>
+            <p>화면 기획서 및 로우피델리티 와이어프레임</p>
+        </header>
+
+        <div class="doc-content">
+            <div class="doc-section">
+                <h2>화면 개요</h2>
+                <p>특정 운행일과 시간 범위를 통하여 셔틀 차량의 GPS 로그 이력을 조회·분석하고 문제 발생 시 개별 로그를 지도에서 확인하는 관제용 화면입니다.</p>
+                <p>마커와 데이터가 많은 점을 고려하여 <strong>테이블에서 정보를 선택하고 지도로 위치를 확인하는 방식</strong>(테이블 위주 탐색)을 핵심 구조로 삼습니다.</p>
+            </div>
+
+            <div class="doc-section">
+                <h2>화면 구성 요소</h2>
+                <ul class="annotation-list">
+                    <li class="annotation-item">
+                        <div class="anno-num">1</div>
+                        <div class="anno-text">
+                            <h3>상단 컨트롤 바 (필터)</h3>
+                            <p>조회를 위한 항목 지정 영역입니다. 단일 운행날짜, 시간 범위, 특정 차량을 선택하고 [조회] 버튼을 클릭하면 아래 지도와 테이블이 갱신됩니다.</p>
+                        </div>
+                    </li>
+                    <li class="annotation-item">
+                        <div class="anno-num">2</div>
+                        <div class="anno-text">
+                            <h3>지도 영역 (화면의 40%)</h3>
+                            <p>실제 카카오맵이 렌더링될 영역. 선택 기간 내 GPS 포인트를 점선 형태의 폴리라인 경로 및 포인트 마커로 표시합니다.</p>
+                        </div>
+                    </li>
+                    <li class="annotation-item">
+                        <div class="anno-num">3</div>
+                        <div class="anno-text">
+                            <h3>마커 및 경로 피드백</h3>
+                            <p>마커의 수가 많을 수 있으므로 기본적으로는 작게/연하게 표시하고, 테이블에서 선택한 로그의 좌표만 크고 강조된 스타일로 변환과 동시에 해당 위치로 지도 중심을 이동시킵니다.</p>
+                        </div>
+                    </li>
+                    <li class="annotation-item">
+                        <div class="anno-num">4</div>
+                        <div class="anno-text">
+                            <h3>로그 데이터 테이블 (화면의 60%)</h3>
+                            <p>사용자 메인 인터랙션 영역으로, 검색 조건의 수 만큼 로그를 리스트 형식으로 출력합니다. (정렬 기능 및 로그번호, 차량ID, 시간, 속도 기본 노출)</p>
+                        </div>
+                    </li>
+                    <li class="annotation-item">
+                        <div class="anno-num">5</div>
+                        <div class="anno-text">
+                            <h3>테이블 중심 양방향 선택</h3>
+                            <p>테이블의 특정 로그(행) 데이터에 Hover 또는 클랙했을 때 지도 상에 해당하는 마커 모양이 강하게 피드백되도록 연동해야 합니다.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 새로 추가된 섹션: 데이터 도출 방식 설명 -->
+            <div class="doc-section">
+                <h2 style="border-top:1px dashed #cbd5e1; padding-top:24px; margin-top:12px; font-size:18px;">주요 지표 및 속성 도출 방식</h2>
+                <p>화면에 표시되는 요약 정보 및 확장 컬럼들은 Raw GPS 단일 로그로부터 다음과 같은 방식으로 가공되어 노출됩니다.</p>
+                <ul style="list-style: none; padding-left: 0; margin-top: 16px;">
+                    <li style="margin-bottom: 20px; background: #f8fafc; padding: 16px; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                        <h4 style="font-size:15px; color:#1e293b; margin-bottom:8px;">1) 속도 데이터 (개별, 평균, 최대)</h4>
+                        <p style="font-size:13px; color:#475569; margin-bottom:6px; line-height:1.5;"><strong>도출 방식:</strong> 단말기에서 전송된 실시간 GPS 단일 로그의 <code>speed</code> 속성값을 기준(단위: km/h 변환)으로 합니다.</p>
+                        <ul style="font-size:13px; color:#64748b; margin-left:16px; margin-bottom:12px;">
+                            <li><strong>개별 로그 속도 표시:</strong> 테이블 우측 '속도' 컬럼에 수치 표시. 특정 기준(예: 60km/h 초과 시)을 넘어가면 <strong>빨간색 폰트 및 경고 아이콘(⚠️)</strong>으로 시각적 차별화.</li>
+                            <li><strong>최대 속도:</strong> 선택된 기간 내 로그 집합 중 <code>Max(speed)</code></li>
+                            <li><strong>평균 속도:</strong> <code>Sum(speed) / 유효 로그 수</code> (신호 대기 등 0km/h인 상태를 평균 속도 연산에 포함할지 여부는 서버 단독 정책으로 설정)</li>
+                        </ul>
+                        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 12px; border-radius: 4px; font-size: 12px; color:#b91c1c; line-height: 1.5;">
+                            <strong>*스마트폰 관제 단말기 (Android/iOS) 유의사항</strong><br>
+                            스마트폰의 네이티브 Geolocation API에서도 <code>speed</code> 값은 기본 반환되지만, 터널/지하차도나 빌딩 숲 등 <strong>음영 지역</strong>에서 튀는 값(Outlier, 예: 갑자기 200km/h)이 들어올 확률이 큽니다. 따라서 서버 로직에서 <strong style="text-decoration:underline;">(1) 신뢰도 필터링(Accuracy Threshold)</strong> 및 <strong style="text-decoration:underline;">(2) 비정상 속도값 Smoothing(평활화) 보정 처리</strong> 후 화면에 제공해야 합니다.
+                        </div>
+                    </li>
+
+                    <li style="margin-bottom: 20px; background: #f8fafc; padding: 16px; border-radius: 6px; border-left: 4px solid #10b981;">
+                        <h4 style="font-size:15px; color:#1e293b; margin-bottom:8px;">2) 확장 컬럼: 상태 (운행 / 정차 / 장기정차)</h4>
+                        <p style="font-size:13px; color:#475569; margin-bottom:6px; line-height:1.5;"><strong>도출 방식:</strong> 일련의 연속된 로그 값들의 속도와 좌표 변화폭을 기반으로 연산.</p>
+                        <ul style="font-size:13px; color:#64748b; margin-left:16px;">
+                            <li><strong>운행:</strong> 현재 로그 속도가 기준치 이상 (예: <code>speed &gt; 3km/h</code>)</li>
+                            <li><strong>정차:</strong> 속도가 연속해서 0이거나 기준치 이하 (예: <code>speed &lt;= 3km/h</code>)</li>
+                            <li><strong>장기정차:</strong> [정차] 상태가 N분 이상 지속되는 경우 상태를 치환시켜 경고 알림 연계.</li>
+                        </ul>
+                    </li>
+
+                    <li style="margin-bottom: 20px; background: #f8fafc; padding: 16px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                        <h4 style="font-size:15px; color:#1e293b; margin-bottom:8px;">3) 확장 컬럼: 체류 시간</h4>
+                        <p style="font-size:13px; color:#475569; margin-bottom:6px; line-height:1.5;"><strong>도출 방식:</strong> 현재 로그가 '정차' 혹은 '정류장 근접' 상태라고 판별되었을 때의 지속 시간 산출.</p>
+                        <ul style="font-size:13px; color:#64748b; margin-left:16px;">
+                            <li>차량 좌표가 반경 X 미터 내에 머물기 시작한 시점 <code>T(start)</code> 저장.</li>
+                            <li>이후 X 미터 범위를 벗어난 시점 <code>T(end)</code>와의 시간차(Minutes)를 계산하여 노출.</li>
+                        </ul>
+                    </li>
+
+                    <li style="background: #f8fafc; padding: 16px; border-radius: 6px; border-left: 4px solid #8b5cf6;">
+                        <h4 style="font-size:15px; color:#1e293b; margin-bottom:8px;">4) 확장 컬럼: 위치명 (Reverse Geocoding)</h4>
+                        <p style="font-size:13px; color:#475569; margin-bottom:6px; line-height:1.5;"><strong>도출 방식:</strong> GPS 로그의 `Lat`, `Lng` 좌표를 사용하여 문자열 형태의 주소나 정류장 이름 변환.</p>
+                        <ul style="font-size:13px; color:#64748b; margin-left:16px;">
+                            <li><strong>마스터 매칭:</strong> 사전에 DB에 등록된 정류장 좌표들 반경 30m 반경 안에 들어왔을 시 해당 [정류장명] 매칭 표시.</li>
+                            <li><strong>API 호출:</strong> 좌표와 매칭되는 정류장이 없을 시, 카카오맵의 리버스 지오코딩 API를 사용해 [간략한 도로명 주소] 표시 (단, 비용 문제로 행 클릭/상세 확인 시에만 On-Demand로 동작 권장).</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 새로 추가된 섹션: 데이터 처리/운영 정책 (예외 처리) -->
+            <div class="doc-section" style="background-color: #fffbeb; border: 1px solid #fef3c7; padding: 20px; border-radius: 8px;">
+                <h2 style="border-bottom: 2px solid #fde68a; padding-bottom: 8px; margin-bottom: 15px; color:#92400e; font-size:16px;">⚠️ 정부 및 정책 처리 (개발/디자인 고려사항)</h2>
+                <ul class="doc-list" style="color:#92400e; font-size: 13px; line-height: 1.6; margin-left: 16px;">
+                    <li style="margin-bottom:8px;"><strong>GPS 음영 지역 (Drop):</strong> 지하차도/터널 등 신호 끊김 시 마지막 좌표와 연결된 좌표 사이를 <span style="text-decoration:underline;">직선 점선 보간</span> 또는 별도 색상으로 잇고 '데이터 누락구간'으로 명시합니다.</li>
+                    <li style="margin-bottom:8px;"><strong>GPS 튐(Noise) 보정:</strong> 1초만에 과도한 거리를 이동한 물리적 불가능 값은 비정상 이상치(Outlier)로 판단, 화면 및 평균 계산에서 제외하는 백엔드 전처리가 필요합니다.</li>
+                    <li style="margin-bottom:8px;"><strong>정차 및 운행 상태 기준:</strong> 지정 정류장 반경 30m 이내에서 속도가 0km/h일 때만 '정류장 체류'로 판정하며, 일반 도로에서 0km/h일 경우 단순 '교통체증 대기'로 분리합니다.</li>
+                    <li style="margin-bottom:8px;"><strong>대용량 데이터 렌더링 (프론트 성능):</strong> 1초 단위 로그 수집 시 장시간 조회하면 수만 개의 Row가 생성됩니다. 브라우저 프리징을 막기 위해 테이블은 <strong>가상 스크롤(Virtual Scrolling)</strong>을 이용하고, 맵 마커는 <strong>클러스터링 혹은 특정 축척비례 생략(Simplification)</strong> 적용이 필수입니다.</li>
+                </ul>
+            </div>
+            
+            <div class="doc-section" style="background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:6px; margin-top:24px;">
+                <h2 style="color:#0f172a; font-size:16px; margin-bottom:8px; border:none; padding:0;">🏁 이전 단계로 돌아가기 (MVP)</h2>
+                <p style="font-size:13px; color:#475569; margin-bottom:8px;">이 문서는 비용/성능상 고도화가 필요한 <strong style="color:blue;">[풀-스펙]</strong> 기획서입니다.<br/>당장 1차 오픈을 위한 가벼운 스펙의 기획서를 원하시면 아래 버튼을 통해 확인하세요.</p>
+                <a href="index.html" target="_blank" style="display:inline-block; background:#3b82f6; color:white; padding:8px 16px; border-radius:4px; font-size:13px; text-decoration:none; font-weight:700; text-align:center; width: 100%; box-sizing: border-box; margin-top:4px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">MVP(v1.0) 화면 기획서 확인하기 ➔</a>
+            </div>
+
+            <div class="doc-section">
+                <p style="text-align:center; color:#9ca3af; font-size:11px; margin-top:20px;">v2.0 / 설계 문서 호환 목적</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 오른쪽 와이어프레임 캔버스 -->
+    <main class="canvas-panel">
+        <div class="wireframe-app">
+            
+            <!-- 사이드바 -->
+            <div class="wf-sidebar">
+                <div class="wf-logo" style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:16px; border-bottom: none; padding-bottom: 10px;">
+                    <span style="font-size:24px;">🚌</span>
+                    <div style="text-align:left; line-height:1.2;">
+                        <span style="color:#0f766e;">셔틀버스</span><span style="font-weight:400; font-size:14px;"> 관리자시스템</span>
+                    </div>
+                </div>
+                <!-- 아이콘들은 분위기를 맞추기 위해 임의로 이모지로 넣었습니다 -->
+                <div class="wf-nav">
+                    <div class="wf-nav-item">⊞ 대시보드</div>
+                    <div class="wf-nav-item">📋 공지사항 관리</div>
+                    <div class="wf-nav-item">📍 셔틀버스 위치보기</div>
+                    <div class="wf-nav-item active">⚙️ 차량운행관리</div>
+                    <div class="wf-nav-item">📊 통계</div>
+                    <div class="wf-nav-item">❗ 긴급공지 관리</div>
+                </div>
+                <div class="wf-sidebar-bottom">
+                    <span style="background:#b45309; color:white; padding:2px 4px; font-size:10px; border-radius:3px; vertical-align:middle;">검단역</span> 로얄파크씨티 PRUGIO
+                </div>
+            </div>
+
+            <!-- 메인 컨텐츠 영역 -->
+            <div class="wf-main">
+                <div class="wf-header">
+                    <div class="wf-header-left">
+                        <span style="font-size:18px;">⌂</span> &gt; <span>셔틀버스 관리자시스템</span> &gt; <span style="font-weight:700;">차량운행관리</span>
+                    </div>
+                    <div class="wf-header-right">
+                        <span>👤 admin 관리자님 안녕하세요.</span>
+                        <span style="color:#d1d5db;">|</span>
+                        <a href="#" style="color:#6b7280; text-decoration:none;">로그아웃</a>
+                    </div>
+                </div>
+
+                <!-- 1. 컨트롤 바 -->
+                <div class="wf-filters">
+                    <div class="wf-anno anno-1">1</div>
+                    <div class="wf-input" style="width: 140px;">2026-03-11 <span>📅</span></div>
+                    <div class="wf-input" style="width: 160px; color:#9ca3af;">시간을 선택해주세요 <span>▼</span></div>
+                    <div class="wf-input" style="width: 90px;">30분 <span>▼</span></div>
+                    <div class="wf-input" style="width: 120px;">BUS-001 <span>▼</span></div>
+                    <div class="wf-btn">조회</div>
+                    <div class="wf-btn" style="background: #10b981; margin-left:8px;">엑셀 다운로드 ⬇</div>
+                    <div style="margin-left:auto; font-size:12px; color:#9ca3af">[요약] 총 로그 241건 / 평균 36km/h / 최대 65km/h</div>
+                </div>
+
+                <div class="wf-content">
+                    <!-- 2. 지도 영역 -->
+                    <div class="wf-map-area">
+                        <div class="wf-anno anno-2">2</div>
+                        <div class="wf-anno anno-3" style="top: 180px; left: 520px;">3</div>
+                        
+                        <!-- 맵 범례 (Map Legend) -->
+                        <div style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.9); padding:10px 14px; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1); font-size:11px; z-index:10; display:flex; flex-direction:column; gap:8px; border:1px solid #d1d5db;">
+                            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px; height:10px; background:#fff; border:2px solid #6b7280; border-radius:50%;"></div> 기본 마커</div>
+                            <div style="display:flex; align-items:center; gap:8px;"><div style="width:10px; height:10px; background:#fff; border:2px solid #ef4444; border-radius:50%;"></div> 과속/이상 마커</div>
+                            <div style="display:flex; align-items:center; gap:8px;"><div style="width:16px; height:0; border-top:2px dashed #6b7280;"></div> 일반 이동 궤적</div>
+                            <div style="display:flex; align-items:center; gap:8px;"><div style="width:16px; height:0; border-top:2px dashed #ef4444;"></div> 통신 끊김(예측 구간)</div>
+                        </div>
+
+                        <div class="wf-map-placeholder">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                            KAKAO MAP AREA
+                            <span>해당 필터 영역에 따른 맵과 궤적 렌더링</span>
+                        </div>
+
+                        <!-- 궤적 모형 -->
+                        <svg class="mock-path">
+                            <path d="M 100 200 Q 200 50, 400 150 T 700 80" />
+                        </svg>
+
+                        <!-- 로그 기록(점) 모형 (디자이너 참고용) -->
+                        <div class="mock-dot" style="top:197px; left:110px;"></div>
+                        <div class="mock-dot" style="top:175px; left:150px;"></div>
+                        <div class="mock-dot" style="top:162px; left:175px;"></div>
+                        <div class="mock-dot" style="top:150px; left:250px;"></div>
+                        <div class="mock-dot" style="top:150px; left:300px;"></div>
+                        <div class="mock-dot" style="top:150px; left:350px;"></div>
+                        <div class="mock-dot" style="top:137px; left:460px;"></div>
+                        <div class="mock-dot" style="top:102px; left:610px;"></div>
+                        <div class="mock-dot" style="top:92px; left:650px;"></div>
+
+                        <!-- 마커 모형 -->
+                        <div class="mock-marker" style="top:190px; left:100px;"></div>
+                        <div class="mock-marker" style="top:125px; left:250px;"></div>
+                        <div class="mock-marker" style="top:140px; left:395px;"></div>
+                        <div class="mock-marker active" style="top:125px; left:520px;"> <!-- 선택된 마커 -->
+                            <!-- 간단 툴팁 형태 (초기 렌더링) -->
+                            <div style="position:absolute; top:-56px; left:-35px; width:86px; text-align:center; z-index:30; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                                <div style="background:#1f2937; color:white; padding:4px 6px; border-radius:4px 4px 0 0; font-size:10px; font-weight:700;">BUS-001</div>
+                                <div style="background:white; color:#374151; padding:4px; font-size:11px; border:1px solid #9ca3af; border-top:none; border-radius:0 0 4px 4px;">
+                                    08:14:32<br><b>36 km/h</b>
+                                </div>
+                                <div style="position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid #9ca3af;"></div>
+                                <div style="position:absolute; bottom:-5px; left:50%; transform:translateX(-50%); border-left:5px solid transparent; border-right:5px solid transparent; border-top:5px solid white;"></div>
+                            </div>
+                        </div>
+                        <div class="mock-marker" style="top:95px;  left:620px;"></div>
+                    </div>
+
+                    <!-- 4. 테이블 영역 -->
+                    <div class="wf-table-area">
+                        <div class="wf-anno anno-4">4</div>
+                        <div class="wf-anno anno-5" style="top: 85px;">5</div>
+
+                        <div class="wf-table-header">
+                            <div class="wf-th">No</div>
+                            <div class="wf-th">차량 ID</div>
+                            <div class="wf-th">시간 ▾</div>
+                            <div class="wf-th">속도</div>
+                        </div>
+
+                        <div class="wf-table-row">
+                            <div class="wf-td muted">121</div>
+                            <div class="wf-td">BUS-001</div>
+                            <div class="wf-td">08:14:28</div>
+                            <div class="wf-td">32 km/h</div>
+                        </div>
+                        <div class="wf-table-row">
+                            <div class="wf-td muted">122</div>
+                            <div class="wf-td">BUS-001</div>
+                            <div class="wf-td">08:14:30</div>
+                            <div class="wf-td">34 km/h</div>
+                        </div>
+                        <div class="wf-table-row active">
+                            <div class="wf-td muted">123</div>
+                            <div class="wf-td">BUS-001</div>
+                            <div class="wf-td" style="font-weight:700;">08:14:32</div>
+                            <div class="wf-td">36 km/h</div>
+                        </div>
+                        <div class="wf-table-row">
+                            <div class="wf-td muted">124</div>
+                            <div class="wf-td">BUS-001</div>
+                            <div class="wf-td">08:14:34</div>
+                            <div class="wf-td" style="color:#ef4444; font-weight:700;">65 km/h ⚠️</div>
+                        </div>
+                        <div class="wf-table-row">
+                            <div class="wf-td muted">125</div>
+                            <div class="wf-td">BUS-001</div>
+                            <div class="wf-td">08:14:36</div>
+                            <div class="wf-td">40 km/h</div>
+                        </div>
+                        <div class="wf-table-row">
+                            <div class="wf-td muted">...</div>
+                            <div class="wf-td">...</div>
+                            <div class="wf-td">...</div>
+                            <div class="wf-td">...</div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rows = document.querySelectorAll('.wf-table-row');
+            const markers = document.querySelectorAll('.mock-marker');
+            const searchBtn = document.querySelector('.wf-btn'); // 첫번째 조회 버튼
+
+            rows.forEach((row, index) => {
+                row.style.cursor = 'pointer'; // 클릭 가능 시각 피드백 추가
+
+                row.addEventListener('click', () => {
+                    // 1. 모든 행/마커 상태 초기화
+                    rows.forEach(r => r.classList.remove('active'));
+                    markers.forEach(m => {
+                        m.classList.remove('active');
+                        m.innerHTML = ''; // 툴팁 제거
+                    });
+                    
+                    // 2. 클릭한 행 활성화
+                    row.classList.add('active');
+                    
+                    // 3. 해당하는 맵 마커 연동 상호작용
+                    if (index < markers.length) {
+                        const marker = markers[index];
+                        marker.classList.add('active');
+                        
+                        // 클릭한 테이블 행에서 시간과 당시 속도를 추출해서 툴팁 박스로 만듦
+                        const time = row.querySelector('.wf-td:nth-child(3)').innerText;
+                        let speed = row.querySelector('.wf-td:nth-child(4)').innerText;
+                        
+                        // 경고(과속) 텍스트가 있을 경우 가공
+                        speed = speed.replace(' ⚠️', '');
+
+                        // 동적 툴팁 오버레이 추가
+                        marker.innerHTML = `
+                            <div style="position:absolute; top:-56px; left:-35px; width:86px; text-align:center; z-index:30; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                                <div style="background:#1f2937; color:white; padding:4px 6px; border-radius:4px 4px 0 0; font-size:10px; font-weight:700;">BUS-001</div>
+                                <div style="background:white; color:#374151; padding:4px; font-size:11px; border:1px solid #9ca3af; border-top:none; border-radius:0 0 4px 4px;">
+                                    ${time}<br><b style="${speed.includes('65') ? 'color:#ef4444' : ''}">${speed} km/h</b>
+                                </div>
+                                <div style="position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid #9ca3af;"></div>
+                                <div style="position:absolute; bottom:-5px; left:50%; transform:translateX(-50%); border-left:5px solid transparent; border-right:5px solid transparent; border-top:5px solid white;"></div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            // 조회 버튼 클릭 인터랙션
+            if(searchBtn) {
+                searchBtn.style.cursor = 'pointer';
+                searchBtn.addEventListener('click', () => {
+                    const originalText = searchBtn.innerText;
+                    searchBtn.innerText = '조회 중...';
+                    searchBtn.style.opacity = '0.7';
+                    setTimeout(() => {
+                        searchBtn.innerText = originalText;
+                        searchBtn.style.opacity = '1';
+                    }, 600);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
