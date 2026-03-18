@@ -217,7 +217,7 @@
         }
 
         .wireframe-app {
-            width: 1024px;
+            width: 1200px;
             min-height: 768px;
             background: white;
             border: 2px solid var(--wireframe-border);
@@ -305,9 +305,10 @@
             border-bottom: 2px solid var(--wireframe-border);
             background-color: var(--wireframe-bg);
             display: flex;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
             position: relative;
+            flex-wrap: nowrap;
         }
 
         .wf-input {
@@ -330,6 +331,8 @@
             padding: 6px 20px;
             border-radius: 4px;
             font-size: 13px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .wf-content {
